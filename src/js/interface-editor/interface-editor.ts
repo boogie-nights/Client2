@@ -32,6 +32,7 @@ import {setupConfiguration} from '../configuration';
 import Pix8 from '../jagex2/graphics/Pix8';
 import {ComData, Settings} from './interface-editor-types';
 import {InterfaceSettings} from './interface-editor-settings';
+import {InterfaceEditorPropertyService} from './interface-editor-property-service';
 
 // noinspection JSSuspiciousNameCombination
 class InterfaceEditor extends Client {
@@ -46,6 +47,7 @@ class InterfaceEditor extends Client {
     stickyComponent: boolean = false;
     movingComponent: boolean = false;
     interfaceSettings: InterfaceSettings = new InterfaceSettings();
+    interfaceEditorPropertyService: InterfaceEditorPropertyService | null = null;
     movingRelativeX: number = 0;
     movingRelativeY: number = 0;
     tooltip: string = '';
@@ -128,6 +130,8 @@ class InterfaceEditor extends Client {
 
             this.populateInterfaces();
             this.loadInterfaceComponents();
+
+            this.interfaceEditorPropertyService = new InterfaceEditorPropertyService(this.packfiles);
         } catch (err) {
             this.errorLoading = true;
             console.error(err);
@@ -226,6 +230,7 @@ class InterfaceEditor extends Client {
                     // first time we start moving we want to preserve where the designer clicked on the component and move relative to that
                     this.movingRelativeX = this.activeComponent.getAbsoluteX() - this.mouseX;
                     this.movingRelativeY = this.activeComponent.getAbsoluteY() - this.mouseY;
+                    console.log(this.activeComponent.id, this.activeComponent.getAbsoluteX(), this.activeComponent.getAbsoluteY());
                 }
 
                 this.movingComponent = true;
@@ -236,6 +241,10 @@ class InterfaceEditor extends Client {
             if (this.movingComponent) {
                 this.activeComponent.move(this.mouseX + this.movingRelativeX, this.mouseY + this.movingRelativeY);
             }
+        }
+
+        if (this.activeComponent) {
+            if (this.interfaceEditorPropertyService) this.interfaceEditorPropertyService.updateStandardPropertiesDisplay(this.activeComponent);
         }
 
         //console.log(this.activeComponent)
@@ -424,7 +433,7 @@ class InterfaceEditor extends Client {
             map.set(child.id, {
                 displayText: `${child.id}: (${this.interfaceTypeToString(child.type)}) - ${componentName}`,
                 comType: child,
-                grandChildren: child.type === ComType.TYPE_LAYER ? this.handleLayerInterfaceComponents(child.childId) : new Map<number, ComData>()
+                children: child.type === ComType.TYPE_LAYER ? this.handleLayerInterfaceComponents(child.childId) : new Map<number, ComData>()
             });
         });
         return map;
@@ -475,13 +484,13 @@ class InterfaceEditor extends Client {
             li.appendChild(p);
             ul.appendChild(li);
 
-            if (data.grandChildren.size > 0) {
+            if (data.children.size > 0) {
                 const ul2: HTMLUListElement = document.createElement('ul');
                 ul2.id = 'interfaceList';
                 ul2.className = 'list-group';
                 li.appendChild(ul2);
 
-                for (const [id, d2] of data.grandChildren) {
+                for (const [id, d2] of data.children) {
                     const li2: HTMLElement = document.createElement('li');
                     li2.id = d2.comType.id.toString();
                     li2.setAttribute('rs-id', d2.comType.id.toString());

@@ -28,15 +28,6 @@
 </head>
 
 <body>
-
-    <div class="top-bar">
-        <ul class="dropdown menu">
-            <li class="menu-text">
-                test
-            </li>
-        </ul>
-    </div>
-
     <div id="settings" class="settings">
         <label for="background">Draw a background:</label>
         <select name="background" id="interface-background">
@@ -78,7 +69,7 @@
                                 <label for="component-name" class="middle">Name</label>
                             </div>
                             <div class="cell small-9">
-                                <input type="text" id="component-name"></input>
+                                <input type="text" id="component-name" autocomplete="off"></input>
                             </div>
                         </div>
                     </form>
@@ -89,7 +80,7 @@
                                 <label for="component-type" class="middle">Type</label>
                             </div>
                             <div class="cell small-9">
-                                <input type="text" id="component-type" disabled></input>
+                                <input type="text" id="component-type" disabled autocomplete="off"></input>
                             </div>
                         </div>
                     </form>
@@ -100,7 +91,7 @@
                                 <label for="clientcode" class="middle">Clientcode</label>
                             </div>
                             <div class="cell small-9">
-                                <input type="number" id="component-type" step="1"></input>
+                                <input type="number" id="clientcode" step="1"></input>
                             </div>
                         </div>
                     </form>
