@@ -19,7 +19,23 @@ canvas {
     z-index: -1;
 }
 
-#rightPanel {
-    height: 334px;
+.interface-list-sizing {
+    width: 512px;
+    height: 350px;
+    margin: 24px auto;
     overflow: auto;
+}
+
+.settings {
+    width: 512px;
+    margin: 0 auto;
+}
+
+.interface-component-container {
+    max-height: 320px;
+    overflow: auto;
+}
+
+.property-container {
+    border-right: solid 1px darkgray;
 }

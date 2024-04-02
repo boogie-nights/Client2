@@ -1,33 +1,270 @@
 <html>
-    <head>
-        <title>Interface Editor | 2004Scape Tools</title>
 
-        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-        <meta http-equiv="Pragma" content="no-cache" />
-        <meta http-equiv="Expires" content="0" />
+<head>
+    <title>Interface Editor | 2004Scape Tools</title>
 
-        <style>
-            body {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                color: #fff;
-                background-color: #000;
-            }
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 
-            canvas {
-                display: block;
-                margin: 0 auto;
-                outline: none;
-                -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* mobile webkit */
-            }
-        </style>
-    </head>
-    <body>
-        <canvas id="canvas" width="512" height="334"></canvas>
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            background-color: #000;
+        }
 
-        <div id="listView">
+        canvas {
+            display: block;
+            margin: 0 auto;
+            outline: none;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            /* mobile webkit */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <ul class="dropdown menu">
+            <li class="menu-text">
+                test
+            </li>
+        </ul>
+    </div>
+
+    <div id="settings" class="settings">
+        <label for="background">Draw a background:</label>
+        <select name="background" id="interface-background">
+            <option value=""></option>
+            <option value="invback">Invback</option>
+            <option value="chatback">Chatback</option>
+        </select>
+    </div>
+    <div>
+        <div class="grid-container" id="interface-display">
+            <div class="grid-x grid-margin-x">
+                <div class="cell">
+                    <hr>
+                </div>
+                <div class="cell medium-6">
+                    <canvas id="canvas" width="512" height="334"></canvas>
+                </div>
+                <div class="cell medium-6 interface-component-container" id="active-interface-components"></div>
+                <div class="cell">
+                    <hr>
+                </div>
+            </div>
+            <div class="grid-x expanded button-group" id="add-interface-components">
+                <button class="button" id="add-layer">Add layer</button>
+                <button class="button" id="add-graphic">Add graphic</button>
+                <button class="button" id="add-model">Add model</button>
+                <button class="button" id="add-text">Add text</button>
+                <button class="button" id="add-rectange">Add rectangle</button>
+                <button class="button" id="add-line">Add line</button>
+            </div>
+
+            <div class="grid-x grid-padding-x" id="interface-component-properties">
+
+                <div class="cell medium-4 property-container" id="standard-properties">
+                    <p>Standard properties</p>
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-name" class="middle">Name</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-name"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-type" class="middle">Type</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-type" disabled></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="clientcode" class="middle">Clientcode</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="number" id="component-type" step="1"></input>
+                            </div>
+                        </div>
+                    </form>
+
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-x" class="middle">X</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-x"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-y" class="middle">Y</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-y"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-width" class="middle">Width</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-width"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-height" class="middle">Height</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="component-height"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-should-hide" class="middle">Hide</label>
+                            </div>
+                            <div class="cell small-9">
+                                <select type="text" id="component-should-hide">
+                                    <option value="false">false</option>
+                                    <option value="true">true</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="component-layer" class="middle">Layer</label>
+                            </div>
+                            <div class="cell small-9">
+                                <select type="text" id="component-layer">
+                                    <option value=""></option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="cell medium-4 property-container" id="individual-properties">
+                    <p>Individual properties</p>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="model-name" class="middle">Model</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="model-name"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="model-zoom" class="middle">Model Zoom</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="number" id="model-zoom" step="1"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="2dxof" class="middle">2d xoff</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="number" id="2dxof" step="1"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="2dyof" class="middle">2d yoff</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="number" id="2dyof" step="1"></input>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+
+                <!-- Used for CS2 -->
+                <!-- <div class="cell medium-3 property-container" id="active-properties">
+                        <p>Active properties</p>
+
+                        <form>
+                            <div class="grid-x grid-padding-x">
+                                <div class="cell small-3">
+                                    <label for="opbase" class="middle">opbase</label>
+                                </div>
+                                <div class="cell small-9">
+                                    <input type="text" id="opbase"></input>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div> -->
+                <div class="cell medium-4" id="overall-interface-settings">
+                    <p>Parent properties</p>
+                </div>
+            </div>
+
+            <!-- Used for CS2 -->
+            <!-- <div class="grid-x grid-padding-x" id="interface-component-action-properties">
+                    <form>
+                        <div class="grid-x grid-padding-x">
+                            <div class="cell small-3">
+                                <label for="onload" class="middle">onload</label>
+                            </div>
+                            <div class="cell small-9">
+                                <input type="text" id="onload"></input>
+                            </div>
+                        </div>
+                    </form>
+                </div> -->
         </div>
-    </body>
+    </div>
+
+    <div id="interfaces"></div>
+</body>
 </html>
