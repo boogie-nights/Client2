@@ -40,14 +40,19 @@ class InterfaceEditor extends Client {
         super(false);
     }
 
+    // Maybe load up what's needed and just give them names.
     packfiles: Map<number, string>[] = [];
+
     previousInterface: ComType | null = null;
     activeInterface: ComType | null = null;
     activeComponent: ComType | null = null;
     stickyComponent: boolean = false;
     movingComponent: boolean = false;
+
+    // Maybe terrible ideas, who could say.
     interfaceSettings: InterfaceSettings = new InterfaceSettings();
     interfaceEditorPropertyService: InterfaceEditorPropertyService | null = null;
+
     movingRelativeX: number = 0;
     movingRelativeY: number = 0;
     tooltip: string = '';
@@ -123,13 +128,18 @@ class InterfaceEditor extends Client {
 
             this.packfiles[1] = await this.loadPack(`${Client.githubRepository}/data/pack/interface.pack`);
             this.packfiles[2] = await this.loadPack(`${Client.githubRepository}/data/pack/model.pack`);
-            console.log(this.packfiles[1], this.packfiles[2]);
+            //console.log(this.packfiles[1], this.packfiles[2]);
 
-            this.activeInterface = ComType.instances[0];
+            this.activeInterface = ComType.instances[188];
             this.previousInterface = this.activeInterface;
 
+            // Draws interface list.
             this.populateInterfaces();
+
+            // Draws all components of an interface...
             this.loadInterfaceComponents();
+
+            console.log(this.loadActiveInterfaceComponents(this.activeInterface));
 
             this.interfaceEditorPropertyService = new InterfaceEditorPropertyService(this.packfiles);
         } catch (err) {
@@ -412,6 +422,37 @@ class InterfaceEditor extends Client {
         return childType;
     }
 
+    loadActiveInterfaceComponents(rsInterface: ComType | undefined | null): Map<number, ComData> {
+        const map: Map<number, ComData> = new Map();
+
+        if (!rsInterface) {
+            return map;
+        }
+
+        const children: number[] | null = rsInterface.childId;
+
+        if (!children) {
+            return map;
+        }
+
+        children.forEach(component => {
+            const child: ComType = ComType.instances[component];
+
+            const splitName: string[] | undefined = this.packfiles[1].get(child.id)?.split(':');
+            let componentName: string = '';
+            if (splitName && splitName[1] && !splitName[1].startsWith('com')) {
+                componentName = splitName[1];
+            }
+
+            map.set(child.id, {
+                displayText: `${child.id}: (${this.interfaceTypeToString(child.type)}) - ${componentName}`,
+                comType: child,
+                children: child.type === ComType.TYPE_LAYER ? this.loadActiveInterfaceComponents(child) : new Map<number, ComData>()
+            });
+        });
+        return map;
+    }
+
     handleLayerInterfaceComponents(children: number[] | undefined | null): Map<number, ComData> {
         const map: Map<number, ComData> = new Map();
         const startingChild: number[] | undefined | null = children;
@@ -422,7 +463,6 @@ class InterfaceEditor extends Client {
 
         startingChild.forEach(component => {
             const child: ComType = ComType.instances[component];
-            console.log(child);
 
             const splitName: string[] | undefined = this.packfiles[1].get(child.id)?.split(':');
             let componentName: string = '';
