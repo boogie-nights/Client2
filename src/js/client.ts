@@ -42,6 +42,7 @@ import SpotAnimType from './jagex2/config/SpotAnimType';
 import VarpType from './jagex2/config/VarpType';
 import SeqBase from './jagex2/graphics/SeqBase';
 import SeqFrame from './jagex2/graphics/SeqFrame';
+import Tile from './jagex2/dash3d/type/Tile';
 
 // noinspection JSSuspiciousNameCombination
 export abstract class Client extends GameShell {
@@ -55,24 +56,26 @@ export abstract class Client extends GameShell {
     static showDebug: boolean = false;
     static githubRepository: string = 'https://raw.githubusercontent.com/2004scape/Server/main';
 
-    protected static readonly exponent: bigint = 58778699976184461502525193738213253649000149147835990136706041084440742975821n;
-    protected static readonly modulus: bigint = 7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789n;
+    // original keys:
+    static readonly exponent: bigint = 58778699976184461502525193738213253649000149147835990136706041084440742975821n;
+    static readonly modulus: bigint = 7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789n;
 
-    protected static updateCounter: number = 0;
-    protected static update2Counter: number = 0;
-    protected static sidebarInputCounter: number = 0;
-    protected static opHeld1Counter: number = 0;
-    protected static opLoc4Counter: number = 0;
-    protected static opNpc5Counter: number = 0;
-    protected static drawCounter: number = 0;
-    protected static opHeld4Counter: number = 0;
-    protected static opLoc5Counter: number = 0;
-    protected static opNpc3Counter: number = 0;
-    protected static opHeld9Counter: number = 0;
-    protected static opPlayer2Counter: number = 0;
-    protected static updatePlayersCounter: number = 0;
-    protected static ifButton5Counter: number = 0;
-    protected static updateLocCounter: number = 0;
+    static cyclelogic1: number = 0;
+    static cyclelogic2: number = 0;
+    static cyclelogic3: number = 0;
+    static cyclelogic4: number = 0;
+    static cyclelogic5: number = 0;
+    static cyclelogic6: number = 0;
+
+    static oplogic1: number = 0;
+    static oplogic2: number = 0;
+    static oplogic3: number = 0;
+    static oplogic4: number = 0;
+    static oplogic5: number = 0;
+    static oplogic6: number = 0;
+    static oplogic7: number = 0;
+    static oplogic8: number = 0;
+    static oplogic9: number = 0;
 
     static setHighMemory = (): void => {
         World3D.lowMemory = false;
@@ -99,7 +102,6 @@ export abstract class Client extends GameShell {
     // important client stuff
     protected db: Database | null = null;
     protected loopCycle: number = 0;
-    protected ingame: boolean = false;
     protected archiveChecksums: number[] = [];
     protected stream: ClientStream | null = null;
     protected in: Packet = Packet.alloc(1);
@@ -479,6 +481,12 @@ export abstract class Client extends GameShell {
     protected midiSize: number = 0;
     protected midiVolume: number = 192;
 
+    // debug
+    // alt+shift click to add a tile overlay
+    protected userTileMarkers: (Tile | null)[] = new TypedArray1d(16, null);
+    protected userTileMarkerIndex: number = 0;
+    protected lastTickFlag: boolean = false;
+
     // ---- override functions
 
     unload = (): void => {
@@ -653,6 +661,26 @@ export abstract class Client extends GameShell {
         SeqBase.instances = [];
         SeqFrame.instances = [];
     };
+
+    getTitleScreenState(): number {
+        return this.titleScreenState;
+    }
+
+    isChatBackInputOpen(): boolean {
+        return this.chatbackInputOpen;
+    }
+
+    isShowSocialInput(): boolean {
+        return this.showSocialInput;
+    }
+
+    getChatInterfaceId(): number {
+        return this.chatInterfaceId;
+    }
+
+    getViewportInterfaceId(): number {
+        return this.viewportInterfaceId;
+    }
 
     // ---- protected functions can be used by impl classes
 
@@ -1261,9 +1289,9 @@ export abstract class Client extends GameShell {
                 const model: Model = Model.modelFromModels(models, modelCount);
                 for (let part: number = 0; part < 5; part++) {
                     if (this.designColors[part] !== 0) {
-                        model.recolor(PlayerEntity.DESIGN_BODY_COLOR[part][0], PlayerEntity.DESIGN_BODY_COLOR[part][this.designColors[part]]);
+                        model.recolor(PlayerEntity.DESIGN_IDK_COLORS[part][0], PlayerEntity.DESIGN_IDK_COLORS[part][this.designColors[part]]);
                         if (part === 1) {
-                            model.recolor(PlayerEntity.DESIGN_HAIR_COLOR[0], PlayerEntity.DESIGN_HAIR_COLOR[this.designColors[part]]);
+                            model.recolor(PlayerEntity.TORSO_RECOLORS[0], PlayerEntity.TORSO_RECOLORS[this.designColors[part]]);
                         }
                     }
                 }

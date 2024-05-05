@@ -20,7 +20,7 @@ import {Int32Array3d, TypedArray1d, TypedArray2d, TypedArray3d, TypedArray4d} fr
 export default class World3D {
     private static visibilityMatrix: boolean[][][][] = new TypedArray4d(8, 32, 51, 51, false);
     private static locBuffer: (Loc | null)[] = new TypedArray1d(100, null);
-    private static levelOccluderCount: Int32Array = new Int32Array(CollisionMap.LEVELS);
+    static levelOccluderCount: Int32Array = new Int32Array(CollisionMap.LEVELS);
     private static levelOccluders: (Occluder | null)[][] = new TypedArray2d(CollisionMap.LEVELS, 500, null);
     private static activeOccluders: (Occluder | null)[] = new TypedArray1d(500, null);
     private static drawTileQueue: LinkList = new LinkList();
@@ -50,47 +50,47 @@ export default class World3D {
     private static minDrawTileZ: number = 0;
     private static maxDrawTileZ: number = 0;
 
-    private static topLevel: number = 0;
+    static topLevel: number = 0;
     private static tilesRemaining: number = 0;
     private static takingInput: boolean = false;
 
     private static visibilityMap: boolean[][] | null = null;
 
-    static readonly FRONT_WALL_TYPES: Int32Array = Int32Array.of(19, 55, 38, 155, 255, 110, 137, 205, 76);
-    static readonly DIRECTION_ALLOW_WALL_CORNER_TYPE: Int32Array = Int32Array.of(160, 192, 80, 96, 0, 144, 80, 48, 160);
-    static readonly BACK_WALL_TYPES: Int32Array = Int32Array.of(76, 8, 137, 4, 0, 1, 38, 2, 19);
-    static readonly WALL_CORNER_TYPE_16_BLOCK_LOC_SPANS: Int32Array = Int32Array.of(0, 0, 2, 0, 0, 2, 1, 1, 0);
-    static readonly WALL_CORNER_TYPE_32_BLOCK_LOC_SPANS: Int32Array = Int32Array.of(2, 0, 0, 2, 0, 0, 0, 4, 4);
-    static readonly WALL_CORNER_TYPE_64_BLOCK_LOC_SPANS: Int32Array = Int32Array.of(0, 4, 4, 8, 0, 0, 8, 0, 0);
-    static readonly WALL_CORNER_TYPE_128_BLOCK_LOC_SPANS: Int32Array = Int32Array.of(1, 1, 0, 0, 0, 8, 0, 0, 8);
-    static readonly WALL_DECORATION_INSET_X: Int32Array = Int32Array.of(53, -53, -53, 53);
-    static readonly WALL_DECORATION_INSET_Z: Int32Array = Int32Array.of(-53, -53, 53, 53);
-    static readonly WALL_DECORATION_OUTSET_X: Int32Array = Int32Array.of(-45, 45, 45, -45);
-    static readonly WALL_DECORATION_OUTSET_Z: Int32Array = Int32Array.of(45, 45, -45, -45);
+    static readonly FRONT_WALL_TYPES: Uint8Array = Uint8Array.of(19, 55, 38, 155, 255, 110, 137, 205, 76);
+    static readonly DIRECTION_ALLOW_WALL_CORNER_TYPE: Uint8Array = Uint8Array.of(160, 192, 80, 96, 0, 144, 80, 48, 160);
+    static readonly BACK_WALL_TYPES: Uint8Array = Uint8Array.of(76, 8, 137, 4, 0, 1, 38, 2, 19);
+    static readonly WALL_CORNER_TYPE_16_BLOCK_LOC_SPANS: Int8Array = Int8Array.of(0, 0, 2, 0, 0, 2, 1, 1, 0);
+    static readonly WALL_CORNER_TYPE_32_BLOCK_LOC_SPANS: Int8Array = Int8Array.of(2, 0, 0, 2, 0, 0, 0, 4, 4);
+    static readonly WALL_CORNER_TYPE_64_BLOCK_LOC_SPANS: Int8Array = Int8Array.of(0, 4, 4, 8, 0, 0, 8, 0, 0);
+    static readonly WALL_CORNER_TYPE_128_BLOCK_LOC_SPANS: Int8Array = Int8Array.of(1, 1, 0, 0, 0, 8, 0, 0, 8);
+    static readonly WALL_DECORATION_INSET_X: Int8Array = Int8Array.of(53, -53, -53, 53);
+    static readonly WALL_DECORATION_INSET_Z: Int8Array = Int8Array.of(-53, -53, 53, 53);
+    static readonly WALL_DECORATION_OUTSET_X: Int8Array = Int8Array.of(-45, 45, 45, -45);
+    static readonly WALL_DECORATION_OUTSET_Z: Int8Array = Int8Array.of(45, 45, -45, -45);
 
     // prettier-ignore
-    static readonly MINIMAP_TILE_MASK: Int32Array[] = [
-        new Int32Array(16),
-        Int32Array.of(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), // PLAIN_SHAPE
-        Int32Array.of(1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1), // DIAGONAL_SHAPE
-        Int32Array.of(1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0), // LEFT_SEMI_DIAGONAL_SMALL_SHAPE
-        Int32Array.of(0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1), // RIGHT_SEMI_DIAGONAL_SMALL_SHAPE
-        Int32Array.of(0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), // LEFT_SEMI_DIAGONAL_BIG_SHAPE
-        Int32Array.of(1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1), // RIGHT_SEMI_DIAGONAL_BIG_SHAPE
-        Int32Array.of(1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0), // HALF_SQUARE_SHAPE
-        Int32Array.of(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0), // CORNER_SMALL_SHAPE
-        Int32Array.of(1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1), // CORNER_BIG_SHAPE
-        Int32Array.of(1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0), // FAN_SMALL_SHAPE
-        Int32Array.of(0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1), // FAN_BIG_SHAPE
-        Int32Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1)  // TRAPEZIUM_SHAPE
+    static readonly MINIMAP_TILE_MASK: Int8Array[] = [
+        new Int8Array(16),
+        Int8Array.of(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), // PLAIN_SHAPE
+        Int8Array.of(1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1), // DIAGONAL_SHAPE
+        Int8Array.of(1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0), // LEFT_SEMI_DIAGONAL_SMALL_SHAPE
+        Int8Array.of(0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1), // RIGHT_SEMI_DIAGONAL_SMALL_SHAPE
+        Int8Array.of(0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), // LEFT_SEMI_DIAGONAL_BIG_SHAPE
+        Int8Array.of(1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1), // RIGHT_SEMI_DIAGONAL_BIG_SHAPE
+        Int8Array.of(1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0), // HALF_SQUARE_SHAPE
+        Int8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0), // CORNER_SMALL_SHAPE
+        Int8Array.of(1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1), // CORNER_BIG_SHAPE
+        Int8Array.of(1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0), // FAN_SMALL_SHAPE
+        Int8Array.of(0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1), // FAN_BIG_SHAPE
+        Int8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1)  // TRAPEZIUM_SHAPE
     ];
 
     // prettier-ignore
-    static readonly MINIMAP_TILE_ROTATION_MAP: Int32Array[] = [
-        Int32Array.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-        Int32Array.of(12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3),
-        Int32Array.of(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0),
-        Int32Array.of(3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12),
+    static readonly MINIMAP_TILE_ROTATION_MAP: Int8Array[] = [
+        Int8Array.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+        Int8Array.of(12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3),
+        Int8Array.of(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0),
+        Int8Array.of(3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12),
     ];
 
     // prettier-ignore
@@ -946,11 +946,11 @@ export default class World3D {
         }
 
         const shape: number = overlay.shape;
-        const angle: number = overlay.rotation;
+        const angle: number = overlay.angle;
         const background: number = overlay.backgroundRgb;
         const foreground: number = overlay.foregroundRgb;
-        const mask: Int32Array = World3D.MINIMAP_TILE_MASK[shape];
-        const rotation: Int32Array = World3D.MINIMAP_TILE_ROTATION_MAP[angle];
+        const mask: Int8Array = World3D.MINIMAP_TILE_MASK[shape];
+        const rotation: Int8Array = World3D.MINIMAP_TILE_ROTATION_MAP[angle];
         let off: number = 0;
         if (background !== 0) {
             for (let i: number = 0; i < 4; i++) {
@@ -1394,14 +1394,14 @@ export default class World3D {
     };
 
     private drawTile = (next: Tile, checkAdjacent: boolean, loopCycle: number): void => {
-        World3D.drawTileQueue.pushBack(next);
+        World3D.drawTileQueue.addTail(next);
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
             let tile: Tile | null;
 
             do {
-                tile = World3D.drawTileQueue.pollFront() as Tile | null;
+                tile = World3D.drawTileQueue.removeHead() as Tile | null;
 
                 if (!tile) {
                     return;
@@ -1619,28 +1619,28 @@ export default class World3D {
                     if (tileX < World3D.eyeTileX && (spans & 0x4) !== 0) {
                         const adjacent: Tile | null = tiles[tileX + 1][tileZ];
                         if (adjacent && adjacent.update) {
-                            World3D.drawTileQueue.pushBack(adjacent);
+                            World3D.drawTileQueue.addTail(adjacent);
                         }
                     }
 
                     if (tileZ < World3D.eyeTileZ && (spans & 0x2) !== 0) {
                         const adjacent: Tile | null = tiles[tileX][tileZ + 1];
                         if (adjacent && adjacent.update) {
-                            World3D.drawTileQueue.pushBack(adjacent);
+                            World3D.drawTileQueue.addTail(adjacent);
                         }
                     }
 
                     if (tileX > World3D.eyeTileX && (spans & 0x1) !== 0) {
                         const adjacent: Tile | null = tiles[tileX - 1][tileZ];
                         if (adjacent && adjacent.update) {
-                            World3D.drawTileQueue.pushBack(adjacent);
+                            World3D.drawTileQueue.addTail(adjacent);
                         }
                     }
 
                     if (tileZ > World3D.eyeTileZ && (spans & 0x8) !== 0) {
                         const adjacent: Tile | null = tiles[tileX][tileZ - 1];
                         if (adjacent && adjacent.update) {
-                            World3D.drawTileQueue.pushBack(adjacent);
+                            World3D.drawTileQueue.addTail(adjacent);
                         }
                     }
                 }
@@ -1786,9 +1786,9 @@ export default class World3D {
                                 }
 
                                 if (occupied.checkLocSpans !== 0) {
-                                    World3D.drawTileQueue.pushBack(occupied);
+                                    World3D.drawTileQueue.addTail(occupied);
                                 } else if ((x !== tileX || z !== tileZ) && occupied.update) {
-                                    World3D.drawTileQueue.pushBack(occupied);
+                                    World3D.drawTileQueue.addTail(occupied);
                                 }
                             }
                         }
@@ -1905,35 +1905,35 @@ export default class World3D {
             if (level < this.maxLevel - 1) {
                 const above: Tile | null = this.levelTiles[level + 1][tileX][tileZ];
                 if (above && above.update) {
-                    World3D.drawTileQueue.pushBack(above);
+                    World3D.drawTileQueue.addTail(above);
                 }
             }
 
             if (tileX < World3D.eyeTileX) {
                 const adjacent: Tile | null = tiles[tileX + 1][tileZ];
                 if (adjacent && adjacent.update) {
-                    World3D.drawTileQueue.pushBack(adjacent);
+                    World3D.drawTileQueue.addTail(adjacent);
                 }
             }
 
             if (tileZ < World3D.eyeTileZ) {
                 const adjacent: Tile | null = tiles[tileX][tileZ + 1];
                 if (adjacent && adjacent.update) {
-                    World3D.drawTileQueue.pushBack(adjacent);
+                    World3D.drawTileQueue.addTail(adjacent);
                 }
             }
 
             if (tileX > World3D.eyeTileX) {
                 const adjacent: Tile | null = tiles[tileX - 1][tileZ];
                 if (adjacent && adjacent.update) {
-                    World3D.drawTileQueue.pushBack(adjacent);
+                    World3D.drawTileQueue.addTail(adjacent);
                 }
             }
 
             if (tileZ > World3D.eyeTileZ) {
                 const adjacent: Tile | null = tiles[tileX][tileZ - 1];
                 if (adjacent && adjacent.update) {
-                    World3D.drawTileQueue.pushBack(adjacent);
+                    World3D.drawTileQueue.addTail(adjacent);
                 }
             }
         }

@@ -39,9 +39,9 @@ class Mesanim extends Client {
     splitPages: string[][] = [];
     splitMesanimId: number = -1;
 
-    activeNpc: NpcType = new NpcType();
+    activeNpc: NpcType = new NpcType(-1);
     inputMesanimId: number = -1;
-    input: string = '';
+    mes: string = '';
 
     async loadPack(url: string): Promise<Map<number, string>> {
         const map: Map<number, string> = new Map();
@@ -97,9 +97,9 @@ class Mesanim extends Client {
             const wordenc: Jagfile = await this.loadArchive('wordenc', 'chat system', this.archiveChecksums[7], 65);
             const sounds: Jagfile = await this.loadArchive('sounds', 'sound effects', this.archiveChecksums[8], 70);
 
-            // this.packfiles[1] = await this.loadPack(`${Viewer.REPO}/data/pack/npc.pack`);
-            // this.packfiles[2] = await this.loadPack(`${Viewer.REPO}/data/pack/mesanim.pack`);
-            // this.packfiles[3] = await this.loadPack(`${Viewer.REPO}/data/pack/seq.pack`);
+            // this.packfiles[1] = await this.loadPack(`${Viewer.REPO}/data/src/pack/npc.pack`);
+            // this.packfiles[2] = await this.loadPack(`${Viewer.REPO}/data/src/pack/mesanim.pack`);
+            // this.packfiles[3] = await this.loadPack(`${Viewer.REPO}/data/src/pack/seq.pack`);
 
             const mesanim: Packet = new Packet(new Uint8Array(await downloadUrl(`${Client.httpAddress}/server/mesanim.dat`)));
 
@@ -154,7 +154,7 @@ class Mesanim extends Client {
             const newline: HTMLInputElement | null = document.querySelector('#newline');
             if (newline !== null) {
                 newline.onclick = (): void => {
-                    this.input += '|';
+                    this.mes += '|';
                     this.exportChat();
                 };
             }
@@ -162,7 +162,7 @@ class Mesanim extends Client {
             const clear: HTMLInputElement | null = document.querySelector('#clear');
             if (clear !== null) {
                 clear.onclick = (): void => {
-                    this.input = '';
+                    this.mes = '';
                     this.exportChat();
                 };
             }
@@ -220,7 +220,7 @@ class Mesanim extends Client {
     //
 
     async populateNpcSelector(): Promise<void> {
-        this.packfiles[1] = await this.loadPack(`${Client.githubRepository}/data/pack/npc.pack`);
+        this.packfiles[1] = await this.loadPack(`${Client.githubRepository}/data/src/pack/npc.pack`);
 
         const npcs: HTMLSelectElement | null = document.querySelector('#npcs');
         if (!npcs) {
@@ -280,7 +280,7 @@ class Mesanim extends Client {
                 li.className = 'list-group-item active';
 
                 this.activeNpc = NpcType.get(id);
-                this.chatNpc(this.activeNpc, this.inputMesanimId, this.input);
+                this.chatNpc(this.activeNpc, this.inputMesanimId, this.mes);
             };
             ul.appendChild(li);
         }
@@ -356,7 +356,7 @@ class Mesanim extends Client {
         }
 
         el.onclick = (): void => {
-            this.input += `@${tag}@`;
+            this.mes += `@${tag}@`;
             this.exportChat();
         };
     }
@@ -377,20 +377,20 @@ class Mesanim extends Client {
 
             const valid: boolean = PixFont.CHARSET.indexOf(String.fromCharCode(key)) !== -1;
             if (valid) {
-                this.input += String.fromCharCode(key);
+                this.mes += String.fromCharCode(key);
                 changed = true;
-            } else if (key === 8 && this.input.length > 0) {
-                this.input = this.input.substring(0, this.input.length - 1);
+            } else if (key === 8 && this.mes.length > 0) {
+                this.mes = this.mes.substring(0, this.mes.length - 1);
                 changed = true;
             } else if (key === 10 || key === 13) {
-                this.input += '|';
+                this.mes += '|';
                 changed = true;
             }
         }
 
-        if (changed && this.input.indexOf('\\n') !== -1) {
+        if (changed && this.mes.indexOf('\\n') !== -1) {
             // we want split to take over and there's hardcoded draw logic around \n
-            this.input = this.input.replaceAll('\\n', '|');
+            this.mes = this.mes.replaceAll('\\n', '|');
         }
 
         if (changed) {
@@ -413,11 +413,11 @@ class Mesanim extends Client {
             return;
         }
 
-        this.splitInit(this.input, 380, 4, this.fontQuill8, this.inputMesanimId); // so we can early-paginate
+        this.splitInit(this.mes, 380, 4, this.fontQuill8, this.inputMesanimId); // so we can early-paginate
         if (this.splitPageCount() > 1) {
-            this.input = '';
+            this.mes = '';
         }
-        this.chatNpc(this.activeNpc, this.inputMesanimId, this.input);
+        this.chatNpc(this.activeNpc, this.inputMesanimId, this.mes);
 
         const el: HTMLInputElement | null = document.querySelector('#export');
         if (el) {
@@ -426,9 +426,9 @@ class Mesanim extends Client {
 
             if (authentic === null || authentic.checked === false) {
                 const mesanimName: string = mesanim.debugname === 'default' ? '"default"' : mesanim.debugname ?? `mesanim_${mesanim.id}`;
-                el.value = `~chatnpc(${mesanimName}, "${this.input}");`;
+                el.value = `~chatnpc(${mesanimName}, "${this.mes}");`;
             } else {
-                el.value = `~chatnpc("<p,${mesanim.debugname}>${this.input}");`;
+                el.value = `~chatnpc("<p,${mesanim.debugname}>${this.mes}");`;
             }
         }
     }

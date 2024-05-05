@@ -34,14 +34,12 @@ export default class Pix24 extends Hashable {
         const jpeg: ImageData = await decodeJpeg(dat);
         const image: Pix24 = new Pix24(jpeg.width, jpeg.height);
 
-        // copy pixels (uint32) to imageData (uint8)
+        const data: Uint32Array = new Uint32Array(jpeg.data.buffer);
         const pixels: Int32Array = image.pixels;
-        const data: Uint8ClampedArray = jpeg.data;
         for (let i: number = 0; i < pixels.length; i++) {
-            const index: number = i * 4;
-            pixels[i] = (data[index + 3] << 24) | (data[index] << 16) | (data[index + 1] << 8) | (data[index + 2] << 0);
+            const pixel: number = data[i];
+            pixels[i] = (((pixel >> 24) & 0xff) << 24) | ((pixel & 0xff) << 16) | (((pixel >> 8) & 0xff) << 8) | ((pixel >> 16) & 0xff);
         }
-
         return image;
     };
 
@@ -75,7 +73,7 @@ export default class Pix24 extends Hashable {
             index.pos += 1;
         }
 
-        if (dat.pos > dat.data.length || index.pos > index.data.length) {
+        if (dat.pos > dat.length || index.pos > index.length) {
             throw new Error();
         }
 
@@ -110,11 +108,11 @@ export default class Pix24 extends Hashable {
         return image;
     };
 
-    bind = (): void => {
+    bind(): void {
         Draw2D.bind(this.pixels, this.width, this.height);
-    };
+    }
 
-    draw = (x: number, y: number): void => {
+    draw(x: number, y: number): void {
         x |= 0;
         y |= 0;
 
@@ -162,9 +160,9 @@ export default class Pix24 extends Hashable {
         if (w > 0 && h > 0) {
             this.copyImageDraw(w, h, this.pixels, srcOff, srcStep, Draw2D.pixels, dstOff, dstStep);
         }
-    };
+    }
 
-    drawAlpha = (alpha: number, x: number, y: number): void => {
+    drawAlpha(alpha: number, x: number, y: number): void {
         x |= 0;
         y |= 0;
 
@@ -210,9 +208,9 @@ export default class Pix24 extends Hashable {
         if (w > 0 && h > 0) {
             this.copyPixelsAlpha(w, h, this.pixels, srcStep, srcOff, Draw2D.pixels, dstStep, dstOff, alpha);
         }
-    };
+    }
 
-    blitOpaque = (x: number, y: number): void => {
+    blitOpaque(x: number, y: number): void {
         x |= 0;
         y |= 0;
 
@@ -260,9 +258,9 @@ export default class Pix24 extends Hashable {
         if (w > 0 && h > 0) {
             this.copyImageBlitOpaque(w, h, this.pixels, srcOff, srcStep, Draw2D.pixels, dstOff, dstStep);
         }
-    };
+    }
 
-    flipHorizontally = (): void => {
+    flipHorizontally(): void {
         const pixels: Int32Array = this.pixels;
         const width: number = this.width;
         const height: number = this.height;
@@ -278,9 +276,9 @@ export default class Pix24 extends Hashable {
                 pixels[off2] = tmp;
             }
         }
-    };
+    }
 
-    flipVertically = (): void => {
+    flipVertically(): void {
         const pixels: Int32Array = this.pixels;
         const width: number = this.width;
         const height: number = this.height;
@@ -295,9 +293,9 @@ export default class Pix24 extends Hashable {
                 pixels[off2] = tmp;
             }
         }
-    };
+    }
 
-    translate = (r: number, g: number, b: number): void => {
+    translate(r: number, g: number, b: number): void {
         for (let i: number = 0; i < this.pixels.length; i++) {
             const rgb: number = this.pixels[i];
 
@@ -329,9 +327,9 @@ export default class Pix24 extends Hashable {
                 this.pixels[i] = (red << 16) + (green << 8) + blue;
             }
         }
-    };
+    }
 
-    crop = (x: number, y: number, w: number, h: number): void => {
+    crop(x: number, y: number, w: number, h: number): void {
         x |= 0;
         y |= 0;
         w |= 0;
@@ -399,9 +397,9 @@ export default class Pix24 extends Hashable {
         } catch (e) {
             console.error('error in sprite clipping routine');
         }
-    };
+    }
 
-    drawRotatedMasked = (x: number, y: number, w: number, h: number, lineStart: Int32Array, lineWidth: Int32Array, anchorX: number, anchorY: number, theta: number, zoom: number): void => {
+    drawRotatedMasked(x: number, y: number, w: number, h: number, lineStart: Int32Array, lineWidth: Int32Array, anchorX: number, anchorY: number, theta: number, zoom: number): void {
         x |= 0;
         y |= 0;
         w |= 0;
@@ -439,9 +437,9 @@ export default class Pix24 extends Hashable {
         } catch (e) {
             /* empty */
         }
-    };
+    }
 
-    drawMasked = (x: number, y: number, mask: Pix8): void => {
+    drawMasked(x: number, y: number, mask: Pix8): void {
         x |= 0;
         y |= 0;
 
@@ -487,9 +485,9 @@ export default class Pix24 extends Hashable {
         if (w > 0 && h > 0) {
             this.copyPixelsMasked(w, h, this.pixels, srcOff, srcStep, Draw2D.pixels, dstStep, dstOff, mask.pixels);
         }
-    };
+    }
 
-    private scale = (w: number, h: number, src: Int32Array, offW: number, offH: number, dst: Int32Array, dstStep: number, dstOff: number, currentW: number, scaleCropWidth: number, scaleCropHeight: number): void => {
+    private scale(w: number, h: number, src: Int32Array, offW: number, offH: number, dst: Int32Array, dstStep: number, dstOff: number, currentW: number, scaleCropWidth: number, scaleCropHeight: number): void {
         try {
             const lastOffW: number = offW;
             for (let y: number = -h; y < 0; y++) {
@@ -510,9 +508,9 @@ export default class Pix24 extends Hashable {
         } catch (e) {
             console.error('error in plot_scale');
         }
-    };
+    }
 
-    private copyImageBlitOpaque = (w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void => {
+    private copyImageBlitOpaque(w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void {
         const qw: number = -(w >> 2);
         w = -(w & 0x3);
 
@@ -531,9 +529,9 @@ export default class Pix24 extends Hashable {
             dstOff += dstStep;
             srcOff += srcStep;
         }
-    };
+    }
 
-    private copyPixelsAlpha = (w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number, alpha: number): void => {
+    private copyPixelsAlpha(w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number, alpha: number): void {
         const invAlpha: number = 256 - alpha;
 
         for (let y: number = -h; y < 0; y++) {
@@ -550,9 +548,9 @@ export default class Pix24 extends Hashable {
             dstOff += dstStep;
             srcOff += srcStep;
         }
-    };
+    }
 
-    private copyImageDraw = (w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void => {
+    private copyImageDraw(w: number, h: number, src: Int32Array, srcOff: number, srcStep: number, dst: Int32Array, dstOff: number, dstStep: number): void {
         const qw: number = -(w >> 2);
         w = -(w & 0x3);
 
@@ -599,9 +597,9 @@ export default class Pix24 extends Hashable {
             dstOff += dstStep;
             srcOff += srcStep;
         }
-    };
+    }
 
-    private copyPixelsMasked = (w: number, h: number, src: Int32Array, srcStep: number, srcOff: number, dst: Int32Array, dstOff: number, dstStep: number, mask: Int8Array): void => {
+    private copyPixelsMasked(w: number, h: number, src: Int32Array, srcStep: number, srcOff: number, dst: Int32Array, dstOff: number, dstStep: number, mask: Int8Array): void {
         const qw: number = -(w >> 2);
         w = -(w & 0x3);
 
@@ -648,5 +646,5 @@ export default class Pix24 extends Hashable {
             dstOff += dstStep;
             srcOff += srcStep;
         }
-    };
+    }
 }

@@ -16,10 +16,10 @@ import {Int32Array2d, Int32Array3d, Uint8Array3d} from '../util/Arrays';
 
 // noinspection JSSuspiciousNameCombination,DuplicatedCode
 export default class World {
-    static readonly ROTATION_WALL_TYPE: Int32Array = Int32Array.of(1, 2, 4, 8);
-    static readonly ROTATION_WALL_CORNER_TYPE: Int32Array = Int32Array.of(16, 32, 64, 128);
-    static readonly WALL_DECORATION_ROTATION_FORWARD_X: Int32Array = Int32Array.of(1, 0, -1, 0);
-    static readonly WALL_DECORATION_ROTATION_FORWARD_Z: Int32Array = Int32Array.of(0, -1, 0, 1);
+    static readonly ROTATION_WALL_TYPE: Int8Array = Int8Array.of(1, 2, 4, 8);
+    static readonly ROTATION_WALL_CORNER_TYPE: Uint8Array = Uint8Array.of(16, 32, 64, 128);
+    static readonly WALL_DECORATION_ROTATION_FORWARD_X: Int8Array = Int8Array.of(1, 0, -1, 0);
+    static readonly WALL_DECORATION_ROTATION_FORWARD_Z: Int8Array = Int8Array.of(0, -1, 0, 1);
 
     static randomHueOffset: number = ((Math.random() * 17.0) | 0) - 8;
     static randomLightnessOffset: number = ((Math.random() * 33.0) | 0) - 16;
@@ -67,12 +67,11 @@ export default class World {
 
     static noise = (x: number, y: number): number => {
         const n: number = x + y * 57;
-        const n1: number = (n << 13) ^ n;
-        const n2: bigint = (BigInt(n1) * (BigInt(n1) * BigInt(n1) * 15731n + 789221n) + 1376312589n) & 0x7fffffffn;
-        return Number(n2 >> 19n) & 0xff;
+        const n1: bigint = BigInt((n << 13) ^ n);
+        return Number(((n1 * (n1 * n1 * 15731n + 789221n) + 1376312589n) & 0x7fffffffn) >> 19n) & 0xff;
     };
 
-    static addLoc = (level: number, x: number, z: number, scene: World3D | null, levelHeightmap: Int32Array[][], locs: LinkList, collision: CollisionMap, locId: number, shape: number, angle: number, trueLevel: number): void => {
+    static addLoc = (level: number, x: number, z: number, scene: World3D | null, levelHeightmap: Int32Array[][], locs: LinkList, collision: CollisionMap | null, locId: number, shape: number, angle: number, trueLevel: number): void => {
         const heightSW: number = levelHeightmap[trueLevel][x][z];
         const heightSE: number = levelHeightmap[trueLevel][x + 1][z];
         const heightNW: number = levelHeightmap[trueLevel][x + 1][z + 1];
@@ -89,21 +88,21 @@ export default class World {
 
         const info: number = ((((angle << 6) + shape) | 0) << 24) >> 24;
 
-        if (shape === LocShape.GROUND_DECOR) {
-            scene?.addGroundDecoration(loc.getModel(LocShape.GROUND_DECOR, angle, heightSW, heightSE, heightNW, heightNE, -1), level, x, z, y, bitset, info);
+        if (shape === LocShape.GROUND_DECOR.id) {
+            scene?.addGroundDecoration(loc.getModel(LocShape.GROUND_DECOR.id, angle, heightSW, heightSE, heightNW, heightNE, -1), level, x, z, y, bitset, info);
 
             if (loc.blockwalk && loc.active) {
-                collision.addFloor(x, z);
+                collision?.addFloor(x, z);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 3, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 3, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.CENTREPIECE_STRAIGHT || shape === LocShape.CENTREPIECE_DIAGONAL) {
-            const model: Model | null = loc.getModel(LocShape.CENTREPIECE_STRAIGHT, angle, heightSW, heightSE, heightNW, heightNE, -1);
+        } else if (shape === LocShape.CENTREPIECE_STRAIGHT.id || shape === LocShape.CENTREPIECE_DIAGONAL.id) {
+            const model: Model | null = loc.getModel(LocShape.CENTREPIECE_STRAIGHT.id, angle, heightSW, heightSE, heightNW, heightNE, -1);
             if (model) {
                 let yaw: number = 0;
-                if (shape === LocShape.CENTREPIECE_DIAGONAL) {
+                if (shape === LocShape.CENTREPIECE_DIAGONAL.id) {
                     yaw += 256;
                 }
 
@@ -121,43 +120,43 @@ export default class World {
             }
 
             if (loc.blockwalk) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape >= LocShape.ROOF_STRAIGHT) {
+        } else if (shape >= LocShape.ROOF_STRAIGHT.id) {
             scene?.addLoc(level, x, z, y, loc.getModel(shape, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info, 1, 1, 0);
 
             if (loc.blockwalk) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_STRAIGHT) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_TYPE[angle], 0, loc.getModel(LocShape.WALL_STRAIGHT, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_STRAIGHT.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_TYPE[angle], 0, loc.getModel(LocShape.WALL_STRAIGHT.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (loc.blockwalk) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_DIAGONAL_CORNER) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_DIAGONAL_CORNER, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_DIAGONAL_CORNER.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_DIAGONAL_CORNER.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (loc.blockwalk) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_L) {
+        } else if (shape === LocShape.WALL_L.id) {
             const offset: number = (angle + 1) & 0x3;
 
             scene?.addWall(
@@ -167,51 +166,51 @@ export default class World {
                 y,
                 World.ROTATION_WALL_TYPE[angle],
                 World.ROTATION_WALL_TYPE[offset],
-                loc.getModel(LocShape.WALL_L, angle + 4, heightSW, heightSE, heightNW, heightNE, -1),
-                loc.getModel(LocShape.WALL_L, offset, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALL_L.id, angle + 4, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALL_L.id, offset, heightSW, heightSE, heightNW, heightNE, -1),
                 bitset,
                 info
             );
 
             if (loc.blockwalk) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_SQUARE_CORNER) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_SQUARE_CORNER, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_SQUARE_CORNER.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_SQUARE_CORNER.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (loc.blockwalk) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_DIAGONAL) {
+        } else if (shape === LocShape.WALL_DIAGONAL.id) {
             scene?.addLoc(level, x, z, y, loc.getModel(shape, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info, 1, 1, 0);
 
             if (loc.blockwalk) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_STRAIGHT_NOOFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle * 512, World.ROTATION_WALL_TYPE[angle]);
+        } else if (shape === LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle * 512, World.ROTATION_WALL_TYPE[angle]);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_STRAIGHT_OFFSET) {
+        } else if (shape === LocShape.WALLDECOR_STRAIGHT_OFFSET.id) {
             let offset: number = 16;
             if (scene) {
                 const width: number = scene.getWallBitset(level, x, z);
                 if (width > 0) {
-                    offset = LocType.get((width >> 14) & 0x7fff).walloff;
+                    offset = LocType.get((width >> 14) & 0x7fff).wallwidth;
                 }
             }
 
@@ -223,32 +222,32 @@ export default class World {
                 World.WALL_DECORATION_ROTATION_FORWARD_X[angle] * offset,
                 World.WALL_DECORATION_ROTATION_FORWARD_Z[angle] * offset,
                 bitset,
-                loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1),
                 info,
                 angle * 512,
                 World.ROTATION_WALL_TYPE[angle]
             );
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_OFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 256);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_OFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 256);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_NOOFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 512);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_NOOFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 512);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_BOTH) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 768);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_BOTH.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 768);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
         }
     };
@@ -723,7 +722,7 @@ export default class World {
     clearLandscape = (startX: number, startZ: number, endX: number, endZ: number): void => {
         let waterOverlay: number = 0;
         for (let i: number = 0; i < FloType.count; i++) {
-            if (FloType.instances[i].name?.toLowerCase() === 'water') {
+            if (FloType.instances[i].debugname?.toLowerCase() === 'water') {
                 waterOverlay = ((i + 1) << 24) >> 24;
                 break;
             }
@@ -889,23 +888,23 @@ export default class World {
 
         const info: number = ((((angle << 6) + shape) | 0) << 24) >> 24;
 
-        if (shape === LocShape.GROUND_DECOR) {
+        if (shape === LocShape.GROUND_DECOR.id) {
             if (!World.lowMemory || loc.active || loc.forcedecor) {
-                scene?.addGroundDecoration(loc.getModel(LocShape.GROUND_DECOR, angle, heightSW, heightSE, heightNW, heightNE, -1), level, x, z, y, bitset, info);
+                scene?.addGroundDecoration(loc.getModel(LocShape.GROUND_DECOR.id, angle, heightSW, heightSE, heightNW, heightNE, -1), level, x, z, y, bitset, info);
 
-                if (loc.blockwalk && loc.active && collision) {
-                    collision.addFloor(x, z);
+                if (loc.blockwalk && loc.active) {
+                    collision?.addFloor(x, z);
                 }
 
                 if (loc.anim !== -1) {
-                    locs.pushBack(new LocEntity(locId, level, 3, x, z, SeqType.instances[loc.anim], true));
+                    locs.addTail(new LocEntity(locId, level, 3, x, z, SeqType.instances[loc.anim], true));
                 }
             }
-        } else if (shape === LocShape.CENTREPIECE_STRAIGHT || shape === LocShape.CENTREPIECE_DIAGONAL) {
-            const model: Model | null = loc.getModel(LocShape.CENTREPIECE_STRAIGHT, angle, heightSW, heightSE, heightNW, heightNE, -1);
+        } else if (shape === LocShape.CENTREPIECE_STRAIGHT.id || shape === LocShape.CENTREPIECE_DIAGONAL.id) {
+            const model: Model | null = loc.getModel(LocShape.CENTREPIECE_STRAIGHT.id, angle, heightSW, heightSE, heightNW, heightNE, -1);
             if (model) {
                 let yaw: number = 0;
-                if (shape === LocShape.CENTREPIECE_DIAGONAL) {
+                if (shape === LocShape.CENTREPIECE_DIAGONAL.id) {
                     yaw += 256;
                 }
 
@@ -935,29 +934,29 @@ export default class World {
                 }
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape >= LocShape.ROOF_STRAIGHT) {
+        } else if (shape >= LocShape.ROOF_STRAIGHT.id) {
             scene?.addLoc(level, x, z, y, loc.getModel(shape, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info, 1, 1, 0);
 
-            if (shape >= LocShape.ROOF_STRAIGHT && shape <= LocShape.ROOF_FLAT && shape !== LocShape.ROOF_DIAGONAL_WITH_ROOFEDGE && level > 0) {
+            if (shape >= LocShape.ROOF_STRAIGHT.id && shape <= LocShape.ROOF_FLAT.id && shape !== LocShape.ROOF_DIAGONAL_WITH_ROOFEDGE.id && level > 0) {
                 this.levelOccludemap[level][x][z] |= 0x924;
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_STRAIGHT) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_TYPE[angle], 0, loc.getModel(LocShape.WALL_STRAIGHT, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_STRAIGHT.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_TYPE[angle], 0, loc.getModel(LocShape.WALL_STRAIGHT.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (angle === LocAngle.WEST) {
                 if (loc.shadow) {
@@ -997,19 +996,19 @@ export default class World {
                 }
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
 
-            if (loc.walloff !== 16) {
-                scene?.setWallDecorationOffset(level, x, z, loc.walloff);
+            if (loc.wallwidth !== 16) {
+                scene?.setWallDecorationOffset(level, x, z, loc.wallwidth);
             }
-        } else if (shape === LocShape.WALL_DIAGONAL_CORNER) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_DIAGONAL_CORNER, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_DIAGONAL_CORNER.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_DIAGONAL_CORNER.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (loc.shadow) {
                 if (angle === LocAngle.WEST) {
@@ -1023,14 +1022,14 @@ export default class World {
                 }
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_L) {
+        } else if (shape === LocShape.WALL_L.id) {
             const offset: number = (angle + 1) & 0x3;
 
             scene?.addWall(
@@ -1040,8 +1039,8 @@ export default class World {
                 y,
                 World.ROTATION_WALL_TYPE[angle],
                 World.ROTATION_WALL_TYPE[offset],
-                loc.getModel(LocShape.WALL_L, angle + 4, heightSW, heightSE, heightNW, heightNE, -1),
-                loc.getModel(LocShape.WALL_L, offset, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALL_L.id, angle + 4, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALL_L.id, offset, heightSW, heightSE, heightNW, heightNE, -1),
                 bitset,
                 info
             );
@@ -1062,19 +1061,19 @@ export default class World {
                 }
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
 
-            if (loc.walloff !== 16) {
-                scene?.setWallDecorationOffset(level, x, z, loc.walloff);
+            if (loc.wallwidth !== 16) {
+                scene?.setWallDecorationOffset(level, x, z, loc.wallwidth);
             }
-        } else if (shape === LocShape.WALL_SQUARE_CORNER) {
-            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_SQUARE_CORNER, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
+        } else if (shape === LocShape.WALL_SQUARE_CORNER.id) {
+            scene?.addWall(level, x, z, y, World.ROTATION_WALL_CORNER_TYPE[angle], 0, loc.getModel(LocShape.WALL_SQUARE_CORNER.id, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info);
 
             if (loc.shadow) {
                 if (angle === LocAngle.WEST) {
@@ -1088,35 +1087,35 @@ export default class World {
                 }
             }
 
-            if (loc.blockwalk && collision) {
-                collision.addWall(x, z, shape, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addWall(x, z, shape, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 0, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALL_DIAGONAL) {
+        } else if (shape === LocShape.WALL_DIAGONAL.id) {
             scene?.addLoc(level, x, z, y, loc.getModel(shape, angle, heightSW, heightSE, heightNW, heightNE, -1), null, bitset, info, 1, 1, 0);
 
-            if (loc.blockwalk && collision) {
-                collision.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
+            if (loc.blockwalk) {
+                collision?.addLoc(x, z, loc.width, loc.length, angle, loc.blockrange);
             }
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 2, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_STRAIGHT_NOOFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle * 512, World.ROTATION_WALL_TYPE[angle]);
+        } else if (shape === LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle * 512, World.ROTATION_WALL_TYPE[angle]);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_STRAIGHT_OFFSET) {
+        } else if (shape === LocShape.WALLDECOR_STRAIGHT_OFFSET.id) {
             let offset: number = 16;
             if (scene) {
                 const width: number = scene.getWallBitset(level, x, z);
                 if (width > 0) {
-                    offset = LocType.get((width >> 14) & 0x7fff).walloff;
+                    offset = LocType.get((width >> 14) & 0x7fff).wallwidth;
                 }
             }
 
@@ -1128,32 +1127,32 @@ export default class World {
                 World.WALL_DECORATION_ROTATION_FORWARD_X[angle] * offset,
                 World.WALL_DECORATION_ROTATION_FORWARD_Z[angle] * offset,
                 bitset,
-                loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1),
+                loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1),
                 info,
                 angle * 512,
                 World.ROTATION_WALL_TYPE[angle]
             );
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_OFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 256);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_OFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 256);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_NOOFFSET) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 512);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_NOOFFSET.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 512);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
-        } else if (shape === LocShape.WALLDECOR_DIAGONAL_BOTH) {
-            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 768);
+        } else if (shape === LocShape.WALLDECOR_DIAGONAL_BOTH.id) {
+            scene?.setWallDecoration(level, x, z, y, 0, 0, bitset, loc.getModel(LocShape.WALLDECOR_STRAIGHT_NOOFFSET.id, LocAngle.WEST, heightSW, heightSE, heightNW, heightNE, -1), info, angle, 768);
 
             if (loc.anim !== -1) {
-                locs.pushBack(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
+                locs.addTail(new LocEntity(locId, level, 1, x, z, SeqType.instances[loc.anim], true));
             }
         }
     };
