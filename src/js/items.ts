@@ -212,7 +212,7 @@ class Items extends Client {
             li.appendChild(p);
 
             const temp: PixMap = new PixMap(32, 32, canvas.getContext('2d', {willReadFrequently: true}) ?? canvas2d);
-            const icon: Pix24 = ObjType.getIcon(id, 10000);
+            const icon: Pix24 = ObjType.getIcon(id, 10000, -1);
 
             temp.bind();
             Draw3D.init2D();

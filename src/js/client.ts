@@ -1006,7 +1006,12 @@ export abstract class Client extends GameShell {
                             const id: number = child.invSlotObjId[slot] - 1;
 
                             if ((slotX >= -32 && slotX <= 512 && slotY >= -32 && slotY <= 334) || (this.objDragArea !== 0 && this.objDragSlot === slot)) {
-                                const icon: Pix24 = ObjType.getIcon(id, child.invSlotObjCount[slot]);
+                                let highlightColor: number = Colors.BLACK;
+                                if (this.objSelected === 1 && this.objSelectedSlot === slot && this.objSelectedInterface === child.id) {
+                                    highlightColor = Colors.WHITE;
+                                }
+
+                                const icon: Pix24 = ObjType.getIcon(id, child.invSlotObjCount[slot], highlightColor);
                                 if (this.objDragArea !== 0 && this.objDragSlot === slot && this.objDragInterfaceId === child.id) {
                                     dx = this.mouseX - this.objGrabX;
                                     dy = this.mouseY - this.objGrabY;

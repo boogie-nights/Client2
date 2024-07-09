@@ -11,8 +11,8 @@ import Pix8 from './Pix8';
 export default class Pix24 extends Hashable {
     // constructor
     readonly pixels: Int32Array;
-    readonly width: number;
-    readonly height: number;
+    width: number;
+    height: number;
     cropX: number;
     cropY: number;
     cropW: number;

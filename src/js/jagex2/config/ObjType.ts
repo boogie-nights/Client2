@@ -83,8 +83,8 @@ export default class ObjType extends ConfigType {
         this.dat = null;
     };
 
-    static getIcon = (id: number, count: number): Pix24 => {
-        if (ObjType.iconCache) {
+    static getIcon = (id: number, count: number, highlightColor: number): Pix24 => {
+        if (ObjType.iconCache && highlightColor === 0) {
             let icon: Pix24 | null = ObjType.iconCache.get(BigInt(id)) as Pix24 | null;
             if (icon && icon.cropH !== count && icon.cropH !== -1) {
                 icon.unlink();
@@ -132,9 +132,19 @@ export default class ObjType extends ConfigType {
         Draw2D.fillRect(0, 0, 32, 32, Colors.BLACK);
         Draw3D.init2D();
 
+        let _z2d: number = obj.zoom2d;
+
+        if (highlightColor === -1) {
+            _z2d = _z2d * 1.5;
+        }
+
+        if (highlightColor > 0) {
+            _z2d = _z2d * 1.04;
+        }
+
         const iModel: Model = obj.getInterfaceModel(1);
-        const sinPitch: number = (Draw3D.sin[obj.xan2d] * obj.zoom2d) >> 16;
-        const cosPitch: number = (Draw3D.cos[obj.xan2d] * obj.zoom2d) >> 16;
+        const sinPitch: number = (Draw3D.sin[obj.xan2d] * _z2d) >> 16;
+        const cosPitch: number = (Draw3D.cos[obj.xan2d] * _z2d) >> 16;
         iModel.drawSimple(0, obj.yan2d, obj.zan2d, obj.xan2d, obj.xof2d, sinPitch + ((iModel.maxY / 2) | 0) + obj.yof2d, cosPitch + obj.yof2d);
 
         // draw outline
@@ -156,27 +166,50 @@ export default class ObjType extends ConfigType {
             }
         }
 
-        // draw shadow
-        for (let x: number = 31; x >= 0; x--) {
-            for (let y: number = 31; y >= 0; y--) {
-                if (icon.pixels[x + y * 32] === 0 && x > 0 && y > 0 && icon.pixels[x + (y - 1) * 32 - 1] > 0) {
-                    icon.pixels[x + y * 32] = 3153952;
+        if (highlightColor > 0) {
+            for (let x: number = 31; x >= 0; x--) {
+                for (let y: number = 31; y >= 0; y--) {
+                    if (icon.pixels[x + y * 32] !== 0) {
+                        continue;
+                    }
+
+                    if (x > 0 && icon.pixels[x + y * 32 - 1] === 1) {
+                        icon.pixels[x + y * 32] = highlightColor;
+                    } else if (y > 0 && icon.pixels[x + (y - 1) * 32] === 1) {
+                        icon.pixels[x + y * 32] = highlightColor;
+                    } else if (x < 31 && icon.pixels[x + y * 32 + 1] === 1) {
+                        icon.pixels[x + y * 32] = highlightColor;
+                    } else if (y < 31 && icon.pixels[x + (y + 1) * 32] === 1) {
+                        icon.pixels[x + y * 32] = highlightColor;
+                    }
+                }
+            }
+        } else {
+            // draw shadow
+            for (let x: number = 31; x >= 0; x--) {
+                for (let y: number = 31; y >= 0; y--) {
+                    if (icon.pixels[x + y * 32] === 0 && x > 0 && y > 0 && icon.pixels[x + (y - 1) * 32 - 1] > 0) {
+                        icon.pixels[x + y * 32] = 3153952;
+                    }
                 }
             }
         }
 
         if (obj.certtemplate !== -1) {
-            const linkedIcon: Pix24 = this.getIcon(obj.certlink, 10);
-            const w: number = linkedIcon.cropW;
-            const h: number = linkedIcon.cropH;
-            linkedIcon.cropW = 32;
-            linkedIcon.cropH = 32;
-            linkedIcon.crop(5, 5, 22, 22);
+            const linkedIcon: Pix24 = this.getIcon(obj.certlink, 10, -1);
+            const w: number = linkedIcon.width;
+            const h: number = linkedIcon.height;
+            linkedIcon.width = 32;
+            linkedIcon.height = 32;
+            linkedIcon.draw(0, 0);
             linkedIcon.cropW = w;
             linkedIcon.cropH = h;
         }
 
-        ObjType.iconCache?.put(BigInt(id), icon);
+        if (highlightColor === 0) {
+            ObjType.iconCache?.put(BigInt(id), icon);
+        }
+
         Draw2D.bind(_data, _w, _h);
         Draw2D.setBounds(_l, _t, _r, _b);
         Draw3D.centerX = _cx;
