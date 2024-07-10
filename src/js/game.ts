@@ -1823,7 +1823,7 @@ class Game extends Client {
                         for (let icon: number = 0; icon < 8; icon++) {
                             if ((player.headicons & (0x1 << icon)) !== 0) {
                                 this.imageHeadicons[icon]?.draw(this.projectX - 12, this.projectY - y);
-                                y -= 25;
+                                y += 25;
                             }
                         }
                     }
